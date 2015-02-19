@@ -6,7 +6,7 @@ module Mongoid
       
       # Merge a mongoid document into another.
       # A.merge!(B)
-      def merge!(another_document, arr_of_hash_uniq = {})
+      def merge!(another_document, validation_flag = false, arr_of_hash_uniq = {})
         if another_document.nil?
           raise "Cannot merge a nil document."
         elsif (self.class <=> another_document.class).nil?
@@ -40,7 +40,7 @@ module Mongoid
           end
           
           # saving the A model
-          self.save
+          self.save!({validate: validation_flag})
           # delete the B model
           another_document.destroy 
         end
@@ -54,7 +54,6 @@ module Mongoid
         associated_records.each do |record|
           first.send(key).push(record) unless already_presented.include? record
         end
-        first.save!
       end
       
       def merge_attributes(a, b, hash_uniq_attr = {})

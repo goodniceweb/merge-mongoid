@@ -14,6 +14,9 @@ class MyClass
   field :array_simple_types, :type => Array
   field :array_hashes, :type => Array
   field :a_hash, :type => Hash
+  field :validate_string, :type => String
+
+  validates :validate_string, presence: true, uniqueness: true
 
   has_many :childs # inverse_of: nil
   embeds_many :an_embeds, class_name: 'MyRandomClass'
@@ -84,6 +87,7 @@ FactoryGirl.define do
         "a number" => 12
       }
     }
+    sequence(:validate_string) { |n| "Valid_String_#{n}" }
     childs { [FactoryGirl.create(:child), FactoryGirl.create(:child)] }
     an_embeds { [FactoryGirl.create(:child), FactoryGirl.create(:child)] }
   end
@@ -246,6 +250,16 @@ describe Mongoid::Document::Mergeable do
 
       it "double increase embeded count" do
         expect {master.merge! slave}.to change{master.an_embeds.to_a.count}.from(2).to(4)
+      end
+    end
+
+    context "when validation enable" do
+      before do
+        slave.validate_string = master.validate_string
+      end
+
+      it "raise error for invalid record" do
+        expect {master.merge!(slave, true)}.to raise_error
       end
     end
   end
