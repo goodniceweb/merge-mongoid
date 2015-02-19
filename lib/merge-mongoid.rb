@@ -15,7 +15,7 @@ module Mongoid
           raise "Can only merge mongoid documents."
         else 
           # let's merge these documents
-          
+
           # A.merge!(B)
           #
           # We iterate on B attributes :
@@ -28,6 +28,16 @@ module Mongoid
                 self.changed_attributes[key] = nil
             end 
           end
+
+          another_document.relations.each do |key, value|
+            case value.relation.to_s
+            when "Mongoid::Relations::Referenced::Many", "Mongoid::Relations::Embedded::Many"
+              merge_relations(self, another_document, key)
+            else
+              # TODO: process another types of associations
+              puts "unknown relation type: #{value.relation}"
+            end
+          end
           
           # saving the A model
           self.save
@@ -37,6 +47,15 @@ module Mongoid
       end
       
       private
+
+      def merge_relations(first, second, key)
+        already_presented = first.send(key)
+        associated_records = second.send(key)
+        associated_records.each do |record|
+          first.send(key).push(record) unless already_presented.include? record
+        end
+        first.save!
+      end
       
       def merge_attributes(a, b, hash_uniq_attr = {})
         # we might want to remove this test, and for instance merge the different types in an Array
