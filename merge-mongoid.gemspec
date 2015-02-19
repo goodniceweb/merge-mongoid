@@ -3,9 +3,9 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "merge-mongoid"
-  s.version     = "0.1"
-  s.author      = "Fabien Allanic"
-  s.homepage    = "http://github.com/fallanic/merge-mongoid"
+  s.version     = "0.1.1"
+  s.author      = "Fabien Allanic, Alexey Cherkashin"
+  s.homepage    = "http://github.com/goodniceweb/merge-mongoid"
   s.summary     = "Easily merge two Mongoid documents."
   s.description = "Easily merge two Mongoid documents. When merging document B into document A, arrays and nested objects will be merged. For the other data types we keep Document A values."
 
