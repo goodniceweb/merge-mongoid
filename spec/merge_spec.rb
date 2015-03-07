@@ -1,98 +1,5 @@
 require "spec_helper"
 
-# something needs this to avoid trace pollution...
-I18n.enforce_available_locales = false
-
-class MyClass
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  include Mongoid::Document::Mergeable
-  
-  field :a_string, :type => String
-  field :a_number, :type => Float
-  field :a_boolean, :type => Boolean
-  field :array_simple_types, :type => Array
-  field :array_hashes, :type => Array
-  field :a_hash, :type => Hash
-  field :validate_string, :type => String
-
-  validates :validate_string, presence: true, uniqueness: true
-
-  has_many :childs # inverse_of: nil
-  embeds_many :an_embeds, class_name: 'MyRandomClass'
-end
-
-class MyInheritedclass < MyClass
-  field :b_hash, :type => Hash
-end
-
-class MyRandomClass
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  include Mongoid::Document::Mergeable
-  
-  field :a_string, :type => String
-  field :a_number, :type => Float
-  field :a_boolean, :type => Boolean
-  field :array_simple_types, :type => Array
-  field :array_hashes, :type => Array
-  field :a_hash, :type => Hash
-end
-
-class Child
-  include Mongoid::Document
-  include Mongoid::Timestamps
-  include Mongoid::Document::Mergeable
-
-  field :a_string, :type => String
-  field :a_number, :type => Float
-
-  # without :class_name raise error "uninitialized constant MyClas"
-  # .... o_0 WAT?
-  belongs_to :my_class, class_name: 'MyClass' 
-end
-
-Mongoid.configure do |config|
-  config.connect_to("merge_mongoid_spec")
-end
-
-FactoryGirl.define do 
-
-  factory :child do
-    _id { BSON::ObjectId.new.to_s }
-    sequence(:a_string) { |n| "Another_String_#{n}" }
-    sequence(:a_number) { |n| n }
-  end
-  
-  factory :my_class do
-    _id { BSON::ObjectId.new.to_s }
-    sequence(:a_string) { |n| "A_String_#{n}" }
-    sequence(:a_number) { |n| n}
-    sequence(:a_boolean) { true}
-    array_simple_types{["an","array","with","elements"]}
-    array_hashes{[{
-      "id" => BSON::ObjectId.new.to_s,
-      "attribute" => "yes there is one"
-    },{
-      "id" => BSON::ObjectId.new.to_s,
-      "attribute" => "a value here too"
-    },{
-      "id" => BSON::ObjectId.new.to_s,
-      "other_attribute" => "hey"
-    }]}
-    a_hash{
-      {
-        "_id" => BSON::ObjectId.new.to_s,
-        "a string" => "hello",
-        "a number" => 12
-      }
-    }
-    sequence(:validate_string) { |n| "Valid_String_#{n}" }
-    childs { [FactoryGirl.create(:child), FactoryGirl.create(:child)] }
-    an_embeds { [FactoryGirl.create(:child), FactoryGirl.create(:child)] }
-  end
-end
-
 describe Mongoid::Document::Mergeable do
   describe ".merge" do
     let(:master) { FactoryGirl.build(:my_class) }
@@ -111,7 +18,7 @@ describe Mongoid::Document::Mergeable do
         run_regular_merge_method
       end
     
-      it "keep all values of first document when merging" do
+      it "keep all values of first document after merging" do
         expect(master.a_string).to eq(master_copy.a_string)
         expect(master.a_number).to eq(master_copy.a_number)
         expect(master.a_boolean).to eq(master_copy.a_boolean)
@@ -151,8 +58,7 @@ describe Mongoid::Document::Mergeable do
       end
 
       it "remove duplicates" do
-        # TODO: move it complicated part to helper
-        values_count = master.array_simple_types.inject(Hash.new(0)) {|h,i| h[i] += 1; h }
+        values_count = count_elements_in_array master.array_simple_types 
         expect(values_count["array"]).to eq(1)
       end
     end
@@ -217,7 +123,7 @@ describe Mongoid::Document::Mergeable do
     end
     
     context "with inherited object" do
-      let(:inherited) { MyInheritedclass.new }
+      let(:inherited) { MyIngeritedClass.new }
 
       it "merge correct" do
         expect {master.merge! inherited}.not_to raise_error
