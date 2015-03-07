@@ -10,6 +10,9 @@ When merging document B into document A, arrays and nested objects will be merge
 
 For the other data types we always keep Document A values, unless the A value is nil and the B is not.
 
+For now these gem allow to merge related and embedded documents with type `Mongoid::Relations::Referenced::Many` and `Mongoid::Relations::Embedded::Many` as well.
+Another types in TODO list for now.
+
 ## Example of data merge
 
 Object A :
